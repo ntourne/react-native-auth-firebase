@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
 import { View, Text } from 'react-native';
 import firebase from 'firebase';
-import { Header, Button } from './components/common';
+import { Header, Button, Spinner } from './components/common';
 import LoginForm from './components/LoginForm';
 
 class App extends Component {
 
+    state = {
+        loggedIn: null,
+        title: 'Loading...'
+    }
 
     componentWillMount() {
 
@@ -18,14 +22,48 @@ class App extends Component {
             storageBucket: "react-native-auth-850d2.appspot.com",
             messagingSenderId: "27901225345"
         });
+
+        // Subscribe to login or logout user
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user)
+                this.setState({ loggedIn: true, title: 'Welcome!' });
+            else
+                this.setState({ loggedIn: false, title: 'Sign in to start' });
+        })
     }
 
     
+    renderContent() {
+
+        switch (this.state.loggedIn) {
+
+            // If logged in, display Logout button
+            case true:
+                return (
+                    <View>
+                        <Button onPress={() => firebase.auth().signOut()}>
+                            Log Out
+                        </Button>
+                    </View>
+                );
+
+            // If logged out, display Login form
+            case false:
+                return <LoginForm />;
+
+            // If fetching auth from firebase, display Spinner
+            default:
+                return <Spinner size="large" />;       
+
+        }
+    }
+
+
     render() {
         return (
             <View>
-                <Header headerText="Authentication"></Header>
-                <LoginForm />
+                <Header headerText={this.state.title}></Header>
+                {this.renderContent()}
             </View>
         )
     }
